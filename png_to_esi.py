@@ -41,6 +41,7 @@ from PIL import Image
 import math
 import re
 import struct
+import os
 
 
 class ZeroSizeError(BaseException):
@@ -81,14 +82,26 @@ def big_endian8(x):
 
 
 with Image.open(sys.argv[1]) as im:
-	filename = str(str(sys.argv[1]).split("/")[-1:][0])
+	'''filename = str(str(sys.argv[1]).split("/")[-1:][0])
 	path = "/".join(str(sys.argv[1]).split("/")[:-1]) + "/"
 	create_file = str(filename.split(".")[:-1][0]) + ".esi"
 	if path != "/":
 		new_file = path + create_file
 	else:
 		new_file = create_file
-	# print(new_file)
+	# print(new_file)'''
+	custom_name = None
+	try:
+		if sys.argv[2] == "-n":
+			custom_name = sys.argv[3]
+	except IndexError:
+		pass
+	path, file = os.path.split(sys.argv[1])
+	if custom_name is not None:
+		file = custom_name + ".esi"
+	else:
+		file = str(file.split(".")[:-1][0]) + ".esi"
+	new_file = os.path.join(path, file)
 	with open(new_file, "xb") as esi:
 		rgb_im = im.convert('RGB')
 		input_data = list(rgb_im.getdata())
@@ -104,8 +117,22 @@ with Image.open(sys.argv[1]) as im:
 		multipush("00000000 00000000 00000000 00000000")
 		horiz_at = vert_at = 0
 		# print("loop")
+		total_amount = len(input_data)
+		done_amount = 0
+		segment_value = total_amount / 80
+		segments = [int(segment_value * n / 3) * 3 for n in range(1, 81)]
+		print("#", end="")
+		print("-" * 78, end="")
+		print("#")
+		seg_counter = 0
+		# print(segments)
 		for value in input_data:
 			multipush(big_endian8(value[0]) + big_endian8(value[1]) + big_endian8(value[2]))
+			done_amount += 1
+			if int(done_amount) == segments[seg_counter]:
+				seg_counter += 1
+				print("#", end="", flush=True)
 			if horiz_at >= horiz:
 				horiz_at = 0
 				vert_at += 1
+		print()

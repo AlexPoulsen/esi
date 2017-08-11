@@ -42,6 +42,7 @@ import math
 import re
 import struct
 from bitstring import BitArray
+import os
 
 
 class ZeroSizeError(BaseException):
@@ -138,7 +139,7 @@ with open(sys.argv[1], "rb") as esi:
 			width = math.ceil(length / 24) * 24
 	except IndexError:
 		pass
-	filename = str(str(sys.argv[1]).split("/")[-1:][0])
+	'''filename = str(str(sys.argv[1]).split("/")[-1:][0])
 	path = "/".join(str(sys.argv[1]).split("/")[:-1]) + "/"
 	create_file = str(filename.split(".")[:-1][0]) + ".png"
 	if custom_name is not None:
@@ -146,19 +147,38 @@ with open(sys.argv[1], "rb") as esi:
 	if path != "/":
 		new_file = path + create_file
 	else:
-		new_file = create_file
+		new_file = create_file'''
+	path, file = os.path.split(sys.argv[1])
+	if custom_name is not None:
+		file = custom_name + ".png"
+	else:
+		file = str(file.split(".")[:-1][0]) + ".png"
+	new_file = os.path.join(path, file)
 	height = int(math.ceil(length / width / 12))
 	width = int(math.ceil(width / 2))
 	size = width, height
 	print(size)
 	im = Image.new("RGB", size)
 	counter = 0
+	total_amount = len(contents)
+	done_amount = 0
+	segment_value = total_amount / 8 / 80 / 3
+	segments = [int(segment_value * n) for n in range(1, 81)]
+	print("#", end="")
+	print("-" * 78, end="")
+	print("#")
+	seg_counter = 0
 	for x in range(height):
 		for y in range(width):
 			try:
 				color_tuple = (int(contents[counter] + contents[counter + 1] + contents[counter + 2] + contents[counter + 3] + contents[counter + 4] + contents[counter + 5] + contents[counter + 6] + contents[counter + 7], 2), int(contents[counter + 8] + contents[counter + 9] + contents[counter + 10] + contents[counter + 11] + contents[counter + 12] + contents[counter + 13] + contents[counter + 14] + contents[counter + 15], 2), int(contents[counter + 16] + contents[counter + 17] + contents[counter + 18] + contents[counter + 19] + contents[counter + 20] + contents[counter + 21] + contents[counter + 22] + contents[counter + 23], 2))
 			except IndexError:
 				color_tuple = (0, 0, 0)
+			done_amount += 1
+			if int(done_amount) == segments[seg_counter]:
+				seg_counter += 1
+				print("#", end="", flush=True)
 			im.putpixel((y, x), color_tuple)
 			counter += 24
+	print()
 	im.save(new_file)
