@@ -37,8 +37,6 @@
 """
 
 import sys
-import numpy as np
-import PIL as pil
 from PIL import Image
 import math
 import re

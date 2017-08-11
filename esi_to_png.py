@@ -37,10 +37,7 @@
 """
 
 import sys
-import numpy as np
-import PIL
 from PIL import Image
-from PIL import PyAccess
 import math
 import re
 import struct
